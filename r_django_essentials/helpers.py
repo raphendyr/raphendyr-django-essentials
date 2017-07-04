@@ -54,6 +54,18 @@ def find_and_import_module(base, name):
     return module, tried
 
 
+def unload_module(module):
+    """
+    Removes module from loaded modules dictionary.
+    If there is no more references to the module, python should remove it from memory.
+    """
+    name = module if isinstance(module, str) else module.__name__
+    try:
+        del sys.modules[name]
+    except KeyError:
+        pass
+
+
 def flatten_loaders(loaders):
     """
     Flatten loaders structure

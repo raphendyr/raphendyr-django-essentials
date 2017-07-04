@@ -8,6 +8,7 @@ from json import loads as json_loads, JSONDecodeError
 from .helpers import (
     ensure_app_configs,
     find_and_import_module,
+    unload_module,
     create_secret_key_file,
     flatten_loaders,
     SettingsDict,
@@ -139,6 +140,8 @@ def update_settings_from_module(settings, module_name, search_base=None, quiet=F
     if module:
         data = {setting: getattr(module, setting) for setting in dir(module) if setting.isupper()}
         settings.update(data)
+        unload_module(module) # module can be removed from memory as all the data in it has been loaded
+        del module
         return len(data)
     else:
         if not quiet:
@@ -165,6 +168,8 @@ def update_secret_from_file(settings, secret_key_file=None, base=None, setting=N
             settings[setting] = getattr(module, setting)
         else:
             warning("File {} doesn't contain {}. To create new key, remove the file.".format(module.__file__, setting))
+        unload_module(module) # module can be moved from memory as all the data in it has been loaded
+        del module
     else:
         settings_dir = settings.path
         key_filename = join_path(settings_dir, secret_key_file+'.py')
