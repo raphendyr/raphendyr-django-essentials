@@ -1,7 +1,25 @@
+This file notes down stuff needed to update pypi with this package.
+
+
+$ cat ~/.pypirc 
+[distutils]
+index-servers =
+  pypi
+  pypitest
+
+[pypi]
+username=<user>
+password=<pass>
+
+[pypitest]
+repository=https://test.pypi.org/legacy/
+username=<user>
+password=<pass>
+
+
 # Register and upload to pypitest to make sure everything is fine
-python setup.py register -r pypitest
 python setup.py sdist upload -r pypitest
 
+
 # Same for production/real pypi
-python setup.py register -r pypi
 python setup.py sdist upload -r pypi
