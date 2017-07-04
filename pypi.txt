@@ -1,0 +1,7 @@
+# Register and upload to pypitest to make sure everything is fine
+python setup.py register -r pypitest
+python setup.py sdist upload -r pypitest
+
+# Same for production/real pypi
+python setup.py register -r pypi
+python setup.py sdist upload -r pypi
