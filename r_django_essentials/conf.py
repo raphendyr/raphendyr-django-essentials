@@ -34,6 +34,7 @@ DEFAULT_REQUIRED_APPS_OPTION = 'required_apps'
 DEFAULT_CONTEXT_PROCESSORS_OPTION = 'context_processors'
 DEFAULT_TEMPLATE_BACKEND = 'django.template.backends.django.DjangoTemplates'
 DEFAULT_ENVIRONMENT_PREFIX = 'DJANGO_'
+DEFAULT_CACHED_BACKENDS = ('django.template.backends.django.DjangoTemplates',)
 DEFAULT_CACHED_LOADER = 'django.template.loaders.cached.Loader'
 DEFAULT_LOADER = 'django.template.loaders.filesystem.Loader'
 DEFAULT_APP_LOADER = 'django.template.loaders.app_directories.Loader'
@@ -204,16 +205,21 @@ def update_context_processors_from_apps(settings, processors_option=None):
         add_required_context_processors(templates, installed_apps, option=processors_option)
 
 
-def use_cache_template_loader_in_production(settings):
+def use_cache_template_loader_in_production(settings, cached_backends=None):
     """
     Wrap template loaders with cached loader on production (DEBUG = False)
     """
+    # FIXME: this is done by Django from version 1.11 onwards, thus drop this at some point
     settings = SettingsDict.ensure(settings)
     debug = settings.get('DEBUG', False)
     templates = settings.get('TEMPLATES')
+    cached_backends = cached_backends or DEFAULT_CACHED_BACKENDS
 
-    if not debug and templates:
-        for conf in templates:
+    if not templates or debug:
+        return
+
+    for conf in templates:
+        if conf['BACKEND'] in cached_backends:
             options = conf.setdefault('OPTIONS', {})
             loaders = options.get('loaders')
             if not loaders or DEFAULT_CACHED_LOADER not in flatten_loaders(loaders):
@@ -233,6 +239,7 @@ def update_settings(name,
                     env_prefix=None,
                     apps_option=None,
                     processors_option=None,
+                    cached_backends=None,
                     quiet=False,
                     ):
     """
@@ -245,4 +252,4 @@ def update_settings(name,
     update_settings_from_environment(settings, env_prefix=env_prefix, quiet=quiet)
     update_installed_apps(settings, apps_option=apps_option)
     update_context_processors_from_apps(settings, processors_option=processors_option)
-    use_cache_template_loader_in_production(settings)
+    use_cache_template_loader_in_production(settings, cached_backends=cached_backends)
