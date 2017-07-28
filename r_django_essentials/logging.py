@@ -26,10 +26,9 @@ class SourceColorizeFormatter(logging.Formatter):
 
     def format(self, record):
         name = record.name
-        possible = [k for k in self.mapping.keys() if k.startswith(name)]
+        possible = [(len(k), k, f) for k, f in self.mapping.items() if name.startswith(k)]
         if possible:
             record = copy(record)
-            key = min(possible, key=lambda x: len(x))
-            colorizer = self.mapping[key]
+            colorizer = max(possible)[2]
             record.msg = colorizer(record.msg)
         return super().format(record)
