@@ -136,7 +136,6 @@ def update_settings_from_module(settings, module_name, search_base=None, quiet=F
     """
     settings = SettingsDict.ensure(settings)
     module, tried = find_and_import_module(search_base or settings.name, module_name)
-    name = module.__name__
 
     if module:
         data = {setting: getattr(module, setting) for setting in dir(module) if setting.isupper()}
