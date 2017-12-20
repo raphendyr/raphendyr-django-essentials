@@ -228,6 +228,7 @@ def use_cache_template_loader_in_production(settings, cached_backends=None):
                         loaders += (DEFAULT_APP_LOADER,)
                 loaders = ((DEFAULT_CACHED_LOADER, loaders),)
                 options['loaders'] = loaders
+                conf.pop('APP_DIRS')
 
 
 # Do it all function
