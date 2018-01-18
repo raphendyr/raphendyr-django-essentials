@@ -1,27 +1,27 @@
 import sys
+from itertools import accumulate, chain
 from importlib import import_module
 
 
-def find_and_import_module(base, name):
+def find_and_import_module(name, search=None):
     """
-    Try to find and import module starting from peer of the base
-    and continueing to root:
+    Search module by name under every component of base.
+    Given name='foo' and base='bar' we will test modules 'bar.foo' and 'foo'.
+    """
+    # generate tuples: (), ('foo'), ('foo', 'bar'), ...
+    search = chain(((),), accumulate((x,) for x in search.split('.'))) if search else ((),)
+    # create python modules: 'm', 'foo.m', 'foo.bar.m', ...
+    name_t = (name,)
+    modules = ['.'.join(x + name_t) for x in search]
+    # start from the right
+    modules.reverse()
 
-    For base='foo.bar.baz' and name='something' try:
-    foo.bar.something, foo.something, something
-    """
-    tried = []
-    module = None
-    while base:
-        base = base.rpartition('.')[0]
-        test = (base+'.' if base else '') + name
-        tried.append(test)
+    for module in modules:
         try:
-            module = import_module(test)
-            break
+            return import_module(module), ()
         except ImportError:
             pass
-    return module, tried
+    return None, modules
 
 
 def unload_module(module):

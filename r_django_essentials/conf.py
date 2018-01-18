@@ -131,27 +131,33 @@ def update_settings_from_environment(settings, env_prefix=None, quiet=False):
 
 def update_settings_from_module(settings, module_name, search_base=None, quiet=False):
     """
-    Update settings module with uppwer case values from another module.
-    Use for example to include values from local_settings.py
+    Update settings module with upper case values from another module.
+    For example, can be used to include values from local_settings.py:
+      `update_settings_from_module(__name__, 'local_settings')`.
 
-    `update_settings_from_module(__name__, 'local_settings')` for example.
+    If search_base is None, then search will start from peer of __name__:
+      e.g. `myapp.local_settings`, `local_settings`
+    If sarch_base is string, then it's parsed as module path:
+      `myapp.foo` -> `myapp.foo.local_settings`, `myapp.local_settings`, `local_settings`
     """
     settings = SettingsDict.ensure(settings)
-    module, tried = find_and_import_module(search_base or settings.name, module_name)
+    if search_base is None:
+        search_base = settings.name.rpartition('.')[0]
+    module, tried = find_and_import_module(module_name, search=search_base)
 
     if module:
         data = {setting: getattr(module, setting) for setting in dir(module) if setting.isupper()}
         settings.update(data)
-        unload_module(module) # module can be removed from memory as all the data in it has been loaded
+        unload_module(module) # module can be removed from the memory as all values have been loaded
         del module
         return len(data)
     else:
         if not quiet:
-            warning("Couldn't find {}.py. Tried: {}".format(module_name, tried))
+            warning("Couldn't find {}. Tried: {}".format(module_name, tried))
         return 0
 
 
-def update_secret_from_file(settings, secret_key_file=None, base=None, setting=None):
+def update_secret_from_file(settings, secret_key_file=None, search_base=None, setting=None):
     """
     Will update only single value from module. If the module doesn't exists, will create the file with new secret key
     """
@@ -163,7 +169,9 @@ def update_secret_from_file(settings, secret_key_file=None, base=None, setting=N
         # We already have non null secret_key
         return
 
-    module, tried = find_and_import_module(base or settings.name, secret_key_file)
+    if search_base is None:
+        search_base = settings.name.rpartition('.')[0]
+    module, tried = find_and_import_module(secret_key_file, search=search_base)
 
     if module:
         if hasattr(module, setting):
