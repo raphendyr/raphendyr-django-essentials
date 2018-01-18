@@ -5,13 +5,15 @@ from collections import Iterable, OrderedDict, defaultdict
 from itertools import chain
 from json import loads as json_loads, JSONDecodeError
 
-from .helpers import (
+from .utils.conf import (
     ensure_app_configs,
-    find_and_import_module,
-    unload_module,
     create_secret_key_file,
     flatten_loaders,
     SettingsDict,
+)
+from .utils.importing import (
+    find_and_import_module,
+    unload_module,
 )
 from .utils import (
     unique,
