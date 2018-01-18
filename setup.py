@@ -20,7 +20,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='raphendyr-django-essentials',
-    version='1.1.2',
+    version='1.2.0',
     description='Some essential tools when working with any Django project',
     long_description=long_description,
     keywords='django',
