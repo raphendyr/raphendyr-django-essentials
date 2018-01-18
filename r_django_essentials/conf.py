@@ -123,7 +123,12 @@ def update_settings_from_environment(settings, env_prefix=None, quiet=False):
         try:
             setting_value = json_loads(setting_value)
         except JSONDecodeError:
-            pass
+            if not quiet and setting_value and (
+                setting_value[0] in '"{[0123456789' or
+                setting_value.startswith('true') or
+                setting_value.startswith('false')
+            ):
+                print("Warning: Failed to parse environment variable as JSON: {}='{}'".format(key, setting_value))
 
         setting = key[prefix_len:]
         settings[setting] = setting_value
