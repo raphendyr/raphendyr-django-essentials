@@ -1,5 +1,5 @@
 from os import environ
-from os.path import join as join_path
+from os.path import join as join_path, basename, splitext
 from sys import stderr
 from collections import Iterable, OrderedDict, defaultdict
 from itertools import chain
@@ -12,7 +12,9 @@ from .utils.conf import (
     SettingsDict,
 )
 from .utils.importing import (
+    file_path_from_module_name,
     find_and_import_module,
+    load_module_from_file,
     unload_module,
 )
 from .utils import (
@@ -157,9 +159,21 @@ def update_settings_from_module(settings, module_name, search_base=None, quiet=F
         return 0
 
 
-def update_secret_from_file(settings, secret_key_file=None, search_base=None, setting=None):
+def update_secret_from_file(settings, secret_key_file=None, search_base=None, create_if_missing=True, setting=None):
     """
-    Will update only single value from module. If the module doesn't exists, will create the file with new secret key
+    Will update only a single value from a python module.
+
+    By default this value is SECRET_KEY, but that can be changed with
+    `setting` argument.
+
+    If the module doesn't exists, then a new file is created unless
+    `create_if_missing` is False.
+
+    Module is searched starting at the peer of settings module. Alternative
+    search path can be given with `search_base`.
+
+    Argument `secret_key_file` can be a python module name or file path. File
+    path can be used to import module from outside of project.
     """
     settings = SettingsDict.ensure(settings)
     secret_key_file = secret_key_file or DEFAULT_SECRET_KEY_FILE
@@ -171,24 +185,31 @@ def update_secret_from_file(settings, secret_key_file=None, search_base=None, se
 
     if search_base is None:
         search_base = settings.name.rpartition('.')[0]
-    module, tried = find_and_import_module(secret_key_file, search=search_base)
+
+    direct_file = '/' in secret_key_file or secret_key_file.endswith('.py')
+
+    if direct_file:
+        name, _ = splitext(basename(secret_key_file))
+        module = load_module_from_file(name, secret_key_file)
+    else:
+        module, _ = find_and_import_module(secret_key_file, search=search_base)
 
     if module:
         if hasattr(module, setting):
             settings[setting] = getattr(module, setting)
         else:
-            warning("File {} doesn't contain {}. To create new key, remove the file.".format(module.__file__, setting))
-        unload_module(module) # module can be moved from memory as all the data in it has been loaded
+            warning("Setting {} was not found from {}.".format(setting, module.__file__))
+        unload_module(module) # module can be removed from the memory as the value have been loaded
         del module
-    else:
-        settings_dir = settings.path
-        key_filename = join_path(settings_dir, secret_key_file+'.py')
+    elif create_if_missing:
+        if not direct_file:
+            secret_key_file = file_path_from_module_name(search_base, secret_key_file)
         try:
-            key = create_secret_key_file(key_filename, setting=setting)
+            key = create_secret_key_file(secret_key_file, setting=setting)
         except IOError as e:
-            warning("Secret key is not defined and we were unable to create {}: {}".format(key_filename, e))
+            warning("Setting {} is not defined and we were unable to create {}: {}".format(setting, secret_key_file, e))
         else:
-            warning("Created new {} in {}".format(setting, key_filename))
+            print("Note: Stored setting {} in {}".format(setting, secret_key_file))
             settings[setting] = key
 
 
