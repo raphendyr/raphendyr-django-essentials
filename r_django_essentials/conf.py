@@ -3,7 +3,7 @@ from os.path import join as join_path, basename, splitext
 from sys import stderr
 from collections import Iterable, OrderedDict, defaultdict
 from itertools import chain
-from json import loads as json_loads, JSONDecodeError
+from json import loads as json_loads
 
 from .utils.conf import (
     ensure_app_configs,
@@ -122,7 +122,7 @@ def update_settings_from_environment(settings, env_prefix=None, quiet=False):
         setting_value = environ[key]
         try:
             setting_value = json_loads(setting_value)
-        except JSONDecodeError:
+        except ValueError: # json.JSONDecodeError (py 3.5+)
             if not quiet and setting_value and (
                 setting_value[0] in '"{[0123456789' or
                 setting_value.startswith('true') or
