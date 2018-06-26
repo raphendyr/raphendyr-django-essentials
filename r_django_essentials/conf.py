@@ -24,13 +24,15 @@ from .utils import (
 
 
 __all__ = [
-    'update_settings',
     'update_settings_from_module',
     'update_secret_from_file',
     'update_settings_from_environment',
     'update_installed_apps',
     'update_context_processors_from_apps',
     'use_cache_template_loader_in_production',
+
+    'update_settings',
+    'update_settings_fixes',
 ]
 
 
@@ -267,7 +269,7 @@ def use_cache_template_loader_in_production(settings, cached_backends=None):
                 conf.pop('APP_DIRS')
 
 
-# Do it all function
+# Do it all functions
 
 def update_settings(name,
                     local_settings_file=None,
@@ -286,6 +288,19 @@ def update_settings(name,
     update_settings_from_module(settings, local_settings_file or DEFAULT_LOCAL_SETTINGS_FILE, quiet=quiet)
     update_secret_from_file(settings, secret_key_file=secret_key_file)
     update_settings_from_environment(settings, env_prefix=env_prefix, quiet=quiet)
+
+    update_settings_fixes(settings,
+                          apps_option=apps_option,
+                          processors_option=processors_option,
+                          cached_backend=cached_backend,
+                          )
+
+def update_settings_fixes(settings,
+                          apps_option=None,
+                          processors_option=None,
+                          cached_backends=None,
+                          ):
+    settings = SettingsDict.ensure(settings)
     update_installed_apps(settings, apps_option=apps_option)
     update_context_processors_from_apps(settings, processors_option=processors_option)
     use_cache_template_loader_in_production(settings, cached_backends=cached_backends)
