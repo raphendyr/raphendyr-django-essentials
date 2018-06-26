@@ -82,6 +82,15 @@ class SettingsDict:
         except AttributeError as e:
             raise KeyError(e)
 
+    def keys(self):
+        return dir(self.module)
+
+    def items(self):
+        return ((k, self[k]) for k in self.keys())
+
+    def values(self):
+        return (v for k, v in self.items())
+
     def get(self, key, default=None):
         try:
             return self[key]
