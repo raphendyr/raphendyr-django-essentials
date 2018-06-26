@@ -20,7 +20,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='raphendyr-django-essentials',
-    version='1.2.1',
+    version='1.3.0',
     description='Some essential tools when working with any Django project',
     long_description=long_description,
     keywords='django',
@@ -46,10 +46,13 @@ setup(
         'Framework :: Django :: 1.9',
         'Framework :: Django :: 1.10',
         'Framework :: Django :: 1.11',
+        'Framework :: Django :: 2.0',
+        'Framework :: Django :: 2.1',
 
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3 :: Only',
     ],
 
@@ -57,6 +60,6 @@ setup(
     include_package_data = True,
 
     install_requires=[
-        'Django >=1.9.7, <2',
+        'Django >=1.9.7, <3',
     ],
 )
