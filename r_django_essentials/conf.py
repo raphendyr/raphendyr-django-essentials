@@ -1,5 +1,5 @@
 from os import environ
-from os.path import join as join_path, basename, splitext
+from os.path import basename, dirname, isfile, join as join_path, splitext
 from sys import stderr
 from collections import Iterable, OrderedDict, defaultdict
 from itertools import chain
@@ -12,6 +12,7 @@ from .utils.conf import (
     SettingsDict,
 )
 from .utils.importing import (
+    find_file,
     file_path_from_module_name,
     find_and_import_module,
     load_module_from_file,
@@ -25,6 +26,7 @@ from .utils import (
 
 __all__ = [
     'update_settings_from_module',
+    'update_settings_with_file',
     'update_secret_from_file',
     'update_settings_from_environment',
     'update_installed_apps',
@@ -160,10 +162,57 @@ def update_settings_from_module(settings, module_name, search_base=None, quiet=F
         unload_module(module) # module can be removed from the memory as all values have been loaded
         del module
         return len(data)
-    else:
+    elif not quiet:
+        warning("Couldn't find {}. Tried: {}".format(module_name, tried))
+    return 0
+
+
+def update_settings_with_file(settings, filename, search_path=None, quiet=False):
+    """
+    Update settings module with upper case values from another module.
+    Another module is referenced with absolute or relative filename.
+    Before executing another module, it's globals will be initialized with values
+    from settings. Thus, you could just write `INSTALLED_APPS.append('my_app')`.
+
+    For example, this can be used to include values from local_settings.py:
+      `update_settings_with_file(__name__, 'local_settings')`.
+
+    If filenmae is not path (no / in it), then search_path is used to find the file.
+    If search_path is None, then directory of settings and it's parent is searched.
+    """
+    settings = SettingsDict.ensure(settings)
+
+    if '/' not in filename:
+        if not search_path:
+            settings_dir = dirname(settings.file)
+            search_path = [settings_dir, dirname(settings_dir)]
+        if not filename.endswith('.py'):
+            filename += '.py'
+        file_ = find_file(filename, search_path)
+        if file_ is None:
+            if not quiet:
+                warning("Couldn't find {}. Path: {}".format(filename, search_path))
+            return
+        filename = file_
+    elif not isfile(filename):
         if not quiet:
-            warning("Couldn't find {}. Tried: {}".format(module_name, tried))
-        return 0
+            warning("File {} doesn't exist.".format(filename))
+        return
+
+    # load module with settings as globals
+    name, _ = splitext(basename(filename))
+    context = {setting: value for setting, value in settings.items() if setting.isupper()}
+    module = load_module_from_file(name, filename, context=context)
+
+    if module:
+        # load values from the module
+        data = {name: getattr(module, name) for name in dir(module) if name.isupper()}
+        settings.update(data)
+        # unload
+        unload_module(module)
+        del module
+    elif not quiet:
+        warning("Could not import {}".format(filename))
 
 
 def update_secret_from_file(settings, secret_key_file=None, search_base=None, create_if_missing=True, setting=None):

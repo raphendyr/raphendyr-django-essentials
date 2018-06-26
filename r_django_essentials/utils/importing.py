@@ -4,6 +4,14 @@ from itertools import accumulate, chain
 from importlib import import_module
 
 
+def find_file(filename: str, path: list) -> str:
+    for p in path:
+        f = join_path(p, filename)
+        if isfile(f):
+            return f
+    return None
+
+
 def file_path_from_module_name(*parts):
     _split = lambda s: s.split('.') if isinstance(s, str) else s
     components = chain.from_iterable(_split(part) for part in parts if part)
@@ -45,18 +53,21 @@ def unload_module(module):
 
 if sys.version_info > (3, 5):
     from importlib.util import spec_from_file_location, module_from_spec
-    def _load_source(name, path):
+    def _load_source(name, path, context=None):
         spec = spec_from_file_location(name, path)
         module = module_from_spec(spec)
+        if context:
+            for key, value in context.items():
+                setattr(module, key, value)
         spec.loader.exec_module(module)
         return module
-else: # Support all older python implementations. Python 3.x implements compatibility
-    from imp import load_source as _load_source
+else:
+    raise ImportError("Library requires python version 3.5+. Currently running python %s" % (sys.version,))
 
-def load_module_from_file(name, path):
+def load_module_from_file(name, path, context=None):
     assert path.endswith('.py'), "Trying to load python from a file that doesn't end in .py: %s" % (path,)
 
     if not isfile(path):
         return None
 
-    return _load_source('__load_module_from_fule_' + name, path)
+    return _load_source('__load_module_from_fule_' + name, path, context=context)
