@@ -167,7 +167,14 @@ def update_settings_from_module(settings, module_name, search_base=None, quiet=F
     return 0
 
 
-def update_settings_with_file(settings, filename, search_path=None, quiet=False):
+def update_settings_with_file(
+        settings,
+        filename=None,
+        *,
+        from_environ=None,
+        search_path=None,
+        quiet=False,
+        ):
     """
     Update settings module with upper case values from another module.
     Another module is referenced with absolute or relative filename.
@@ -181,6 +188,10 @@ def update_settings_with_file(settings, filename, search_path=None, quiet=False)
     If search_path is None, then directory of settings and it's parent is searched.
     """
     settings = SettingsDict.ensure(settings)
+    if filename is None:
+        filename = DEFAULT_LOCAL_SETTINGS_FILE
+    if from_environ is not None:
+        filename = environ.get(from_environ, filename)
 
     if '/' not in filename:
         if not search_path:
