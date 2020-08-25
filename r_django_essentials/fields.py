@@ -1,3 +1,4 @@
+import enum
 from collections import OrderedDict
 
 
@@ -45,3 +46,12 @@ class Enum(object):
             s.append("  (%s, %s, %s)," % (key, val, txt))
         s.append("])>")
         return '\n'.join(s)
+
+class EnumChoices(enum.Enum):
+    def __init__(self, value, description):
+        self._value_ = value
+        self.description = description
+
+    @classmethod
+    def choices(cls):
+        return tuple((item.value, item.description) for item in cls.__members__.values())
