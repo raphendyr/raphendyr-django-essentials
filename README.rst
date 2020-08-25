@@ -178,9 +178,9 @@ In your :code:`settings.py`:
 
 .. code-block:: python
 
-  OGGING = {
+  LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,
+    'disable_existing_loggers': True,
     'formatters': {
       'colored': {
         '()': 'r_django_essentials.logging.SourceColorizeFormatter',
